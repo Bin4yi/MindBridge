@@ -119,24 +119,67 @@ class MentalHealthCrew:
         user_profile: Dict = None,
         context: Dict = None
     ) -> Dict[str, Any]:
-        """Process a message through the multi-agent system"""
-        
+        """Process a message through the multi-agent system and return the most human, LLM-generated response."""
         if session_history is None:
             session_history = []
         if user_profile is None:
             user_profile = {}
         if context is None:
             context = {}
-            
+
         # Create dynamic tasks based on the message
         tasks = self._create_dynamic_tasks(message, session_id, session_history, user_profile, context)
-        
+
         # Execute the crew with the dynamic tasks
         self.crew.tasks = tasks
         result = self.crew.kickoff()
-        
-        # Parse and structure the results
-        return self._parse_crew_results(result, message, session_id)
+
+        # Try to extract the most relevant, human LLM-generated response from the crew output
+        # If result is a dict with agent outputs, prefer crisis, therapist, or empathy agent outputs
+        if isinstance(result, dict):
+            # Try to find the most urgent/human response
+            for key in ["crisis", "therapist", "empathy", "recommendations"]:
+                if key in result and isinstance(result[key], dict) and "output" in result[key]:
+                    response = result[key]["output"]
+                    agent_type = key
+                    break
+            else:
+                # Fallback: just use the first available output
+                for v in result.values():
+                    if isinstance(v, dict) and "output" in v:
+                        response = v["output"]
+                        agent_type = v.get("role", "unknown")
+                        break
+                else:
+                    response = str(result)
+                    agent_type = "unknown"
+        else:
+            response = str(result)
+            agent_type = "unknown"
+
+        # Ensure the response is at least 50-100 words and reads like a therapist/doctor speech
+        word_count = len(response.split())
+        if word_count < 50:
+            # Use the therapist agent to expand the response
+            therapist = self.agents["therapist"]
+            prompt = (
+                f"As a compassionate therapist, expand the following response to be more detailed, warm, and supportive. "
+                f"Make it at least 50-100 words, and speak as if you are talking directly to the client.\n\n"
+                f"Original response: {response}"
+            )
+            try:
+                expanded = therapist.llm(prompt)
+                if isinstance(expanded, str) and len(expanded.split()) >= 50:
+                    response = expanded
+            except Exception:
+                pass
+
+        return {
+            "response": response,
+            "agentType": agent_type,
+            "session_id": session_id,
+            "raw": result
+        }
     
     def _create_dynamic_tasks(
         self, 
@@ -273,119 +316,4 @@ class MentalHealthCrew:
         
         return f"Recent mood patterns: {', '.join(recent_moods)}" if recent_moods else "No mood history available"
     
-    def _parse_crew_results(self, result: str, original_message: str, session_id: str) -> Dict[str, Any]:
-        """Parse the crew execution results into structured response"""
-        
-        # In a real implementation, this would parse the actual crew results
-        # For now, we'll create a structured response based on the message analysis
-        
-        message_lower = original_message.lower()
-        
-        # Simple crisis detection
-        crisis_keywords = ["kill myself", "suicide", "end it all", "want to die", "hurt myself", "not worth living"]
-        is_crisis = any(keyword in message_lower for keyword in crisis_keywords)
-        
-        # Simple mood detection
-        sad_words = ["sad", "depressed", "hopeless", "empty", "lonely", "worthless"]
-        anxious_words = ["anxious", "worried", "panic", "scared", "nervous", "stressed"]
-        angry_words = ["angry", "furious", "mad", "irritated", "frustrated"]
-        
-        mood_score = 5  # Neutral
-        emotional_state = "neutral"
-        
-        if any(word in message_lower for word in sad_words):
-            mood_score = 3
-            emotional_state = "sad"
-        elif any(word in message_lower for word in anxious_words):
-            mood_score = 4
-            emotional_state = "anxious"
-        elif any(word in message_lower for word in angry_words):
-            mood_score = 6
-            emotional_state = "frustrated"
-        
-        # Generate appropriate response
-        if is_crisis:
-            response = """I'm very concerned about your safety right now. Your life has value, and you don't have to face this alone.
-
-**Immediate Support:**
-• Call 988 (Suicide & Crisis Lifeline) - Available 24/7
-• Text HOME to 741741 (Crisis Text Line)
-• Go to your nearest emergency room
-• Call 911 if you're in immediate danger
-
-Can you reach out to one of these resources right now? I'm here to support you through this."""
-            
-            agent_type = "crisis_support"
-            confidence = 95
-            recommendations = [
-                "Contact emergency services immediately",
-                "Reach out to a trusted friend or family member",
-                "Remove any means of self-harm from your environment",
-                "Stay in a safe, public place if possible"
-            ]
-        
-        elif emotional_state == "sad":
-            response = f"""I can hear the sadness in your words, and I want you to know that what you're feeling is valid. Depression can make everything feel overwhelming and hopeless, but you're not alone in this.
-
-It takes courage to reach out, and I'm glad you did. These feelings, while intense and painful right now, can change with the right support and care.
-
-What has been the most difficult part of your day today?"""
-            
-            agent_type = "therapist"
-            confidence = 85
-            recommendations = [
-                "Practice gentle self-compassion",
-                "Try the 5-4-3-2-1 grounding technique",
-                "Reach out to a trusted person in your support network",
-                "Consider a brief walk in nature if possible"
-            ]
-            
-        elif emotional_state == "anxious":
-            response = f"""I can sense the anxiety you're experiencing, and I want you to know that anxiety, while uncomfortable, is your body's way of trying to protect you. Let's work together to help you feel more grounded.
-
-Right now, let's focus on your breathing. Can you take a slow breath in for 4 counts, hold for 4, and exhale for 6? This can help activate your body's relaxation response.
-
-What thoughts are going through your mind right now that might be contributing to this anxious feeling?"""
-            
-            agent_type = "therapist"
-            confidence = 88
-            recommendations = [
-                "Practice deep breathing exercises",
-                "Try progressive muscle relaxation",
-                "Use the STOP technique (Stop, Take a breath, Observe, Proceed)",
-                "Ground yourself using your five senses"
-            ]
-            
-        else:
-            response = f"""Thank you for sharing that with me. I can hear that this is important to you, and I appreciate your openness in this conversation.
-
-I'm here to listen and support you through whatever you're experiencing. Sometimes it helps just to have someone witness our thoughts and feelings without judgment.
-
-What's been on your mind lately? Is there something specific you'd like to explore or talk about today?"""
-            
-            agent_type = "therapist"
-            confidence = 80
-            recommendations = [
-                "Continue self-reflection and awareness",
-                "Consider journaling your thoughts and feelings",
-                "Practice mindfulness and present-moment awareness",
-                "Maintain regular self-care routines"
-            ]
-        
-        return {
-            "response": response,
-            "agentType": agent_type,
-            "confidenceScore": confidence,
-            "requiresImmediateAttention": is_crisis,
-            "emotionalState": emotional_state,
-            "recommendations": recommendations,
-            "sessionSummary": f"User expressed {emotional_state} emotions. {'Crisis intervention provided.' if is_crisis else 'Therapeutic support provided.'}",
-            "analysis": {
-                "mood_score": mood_score,
-                "crisis_detected": is_crisis,
-                "emotional_indicators": emotional_state,
-                "session_id": session_id,
-                "processed_at": datetime.now().isoformat(),
-                "agent_coordination": "Multi-agent system successfully coordinated response"
-            }
-        }
+    # _parse_crew_results is now obsolete and not used
