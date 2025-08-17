@@ -1,0 +1,27 @@
+[package]
+org = "mindbridge"
+name = "backend"
+version = "0.1.0"
+
+[build-options]
+observabilityIncluded = true
+
+[[dependency]]
+org = "ballerina"
+name = "http"
+version = "2.10.0"
+
+[[dependency]]
+org = "ballerina"
+name = "io"
+version = "1.6.0"
+
+[[dependency]]
+org = "ballerina"
+name = "mime"
+version = "2.9.0"
+
+[[dependency]]
+org = "ballerina"
+name = "log"
+version = "2.9.0"

@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  ballerina-backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile.ballerina
+    ports:
+      - "8001:8001"
+    depends_on:
+      - whisper-service
+
+  whisper-service:
+    build:
+      context: ../backend/modules/speech
+      dockerfile: Dockerfile.whisper
+    ports:
+      - "9000:9000"
+    volumes:
+      - whisper_cache:/root/.cache/whisper # <-- Mount persistent cache here
+
+volumes:
+  whisper_cache:
