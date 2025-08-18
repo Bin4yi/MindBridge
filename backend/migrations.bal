@@ -72,12 +72,29 @@ function applyMigration1() returns error? {
     log:printInfo("Migration 1 applied successfully");
 }
 
-// Migration 2: Add email column to users
+// Migration 2: Add voice table
 function applyMigration2() returns error? {
-    log:printInfo("Applying migration 2: Add email to users");
+    log:printInfo("Applying migration 2: Add voice table");
     
     sql:ExecutionResult _ = check dbClient->execute(`
-        ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)
+        CREATE TABLE IF NOT EXISTS voice (
+            voice_id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(user_id),
+            user_text TEXT NOT NULL,
+            agent_response TEXT,
+            session_id VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    // Add index for better performance
+    sql:ExecutionResult _ = check dbClient->execute(`
+        CREATE INDEX IF NOT EXISTS idx_voice_user_id ON voice(user_id)
+    `);
+    
+    sql:ExecutionResult _ = check dbClient->execute(`
+        CREATE INDEX IF NOT EXISTS idx_voice_session_id ON voice(session_id)
     `);
     
     // Mark migration as applied

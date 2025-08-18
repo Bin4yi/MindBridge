@@ -25,6 +25,17 @@ public type Chat record {|
     time:Civil? updated_at;
 |};
 
+// Voice model - NEW
+public type Voice record {|
+    int voice_id?;
+    int user_id;
+    string user_text;
+    string? agent_response;
+    string session_id;
+    time:Civil created_at?;
+    time:Civil? updated_at;
+|};
+
 // Database initialization
 public function initializeDatabase() returns error? {
     log:printInfo("Initializing database with migrations...");
@@ -143,4 +154,75 @@ public function getChatsBySession(string sessionId) returns Chat[]|error {
     
     check resultStream.close();
     return chats;
+}
+
+// ===== NEW VOICE OPERATIONS =====
+
+// Save user voice transcription
+public function saveVoiceTranscription(int userId, string userText, string sessionId) returns int|error {
+    sql:ExecutionResult result = check dbClient->execute(`
+        INSERT INTO voice (user_id, user_text, session_id) 
+        VALUES (${userId}, ${userText}, ${sessionId})
+    `);
+    
+    if result.lastInsertId is int {
+        log:printInfo("Voice transcription saved with ID: " + result.lastInsertId.toString());
+        return <int>result.lastInsertId;
+    } else {
+        return error("Failed to save voice transcription");
+    }
+}
+
+// Save agent voice response
+public function saveVoiceAgentResponse(int voiceId, string agentResponse) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        UPDATE voice 
+        SET agent_response = ${agentResponse}, updated_at = CURRENT_TIMESTAMP 
+        WHERE voice_id = ${voiceId}
+    `);
+    
+    if result.affectedRowCount > 0 {
+        log:printInfo("Voice agent response saved for voice ID: " + voiceId.toString());
+    } else {
+        return error("Failed to save voice agent response - voice record not found");
+    }
+}
+
+// Get voice history for a user
+public function getVoiceHistory(int userId, int? 'limit = 50) returns Voice[]|error {
+    stream<Voice, sql:Error?> resultStream = dbClient->query(`
+        SELECT voice_id, user_id, user_text, agent_response, session_id, created_at, updated_at 
+        FROM voice 
+        WHERE user_id = ${userId} 
+        ORDER BY created_at DESC 
+        LIMIT ${'limit}
+    `);
+    
+    Voice[] voices = [];
+    check from Voice voice in resultStream
+        do {
+            voices.push(voice);
+        };
+    
+    check resultStream.close();
+    return voices;
+}
+
+// Get voice conversation by session
+public function getVoiceBySession(string sessionId) returns Voice[]|error {
+    stream<Voice, sql:Error?> resultStream = dbClient->query(`
+        SELECT voice_id, user_id, user_text, agent_response, session_id, created_at, updated_at 
+        FROM voice 
+        WHERE session_id = ${sessionId} 
+        ORDER BY created_at ASC
+    `);
+    
+    Voice[] voices = [];
+    check from Voice voice in resultStream
+        do {
+            voices.push(voice);
+        };
+    
+    check resultStream.close();
+    return voices;
 }
