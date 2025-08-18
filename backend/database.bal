@@ -27,31 +27,12 @@ public type Chat record {|
 
 // Database initialization
 public function initializeDatabase() returns error? {
-    log:printInfo("Initializing database...");
+    log:printInfo("Initializing database with migrations...");
     
-    // Create users table
-    sql:ExecutionResult result1 = check dbClient->execute(`
-        CREATE TABLE IF NOT EXISTS users (
-            user_id SERIAL PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
+    // Apply all pending migrations
+    check applyMigrations();
     
-    // Create chats table
-    sql:ExecutionResult result2 = check dbClient->execute(`
-        CREATE TABLE IF NOT EXISTS chats (
-            message_id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES users(user_id),
-            message TEXT NOT NULL,
-            response TEXT,
-            session_id VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
-    
-    log:printInfo("Database tables created successfully");
+    log:printInfo("Database initialized successfully");
 }
 
 // User operations
