@@ -81,6 +81,7 @@ public class VoiceChatHandler {
             string agentText = check agentResponseJson.response;
             
             log:printInfo("Agent response: " + agentText);
+            log:printInfo("Agent metadata: " + agentResponseJson.toString());
 
             // Step 3: Convert agent response to speech
             speech:TTSResponse ttsResponse = self.speechService.textToSpeech({

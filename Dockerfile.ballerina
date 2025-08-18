@@ -1,0 +1,15 @@
+FROM ballerina/ballerina:latest
+
+WORKDIR /app
+
+# Copy ballerina source file(s)
+COPY backend/main.bal .
+COPY backend/modules/ modules/
+COPY backend/config/ config/
+
+# Install required dependencies (if any)
+# RUN bal build
+
+# Run the service
+EXPOSE 8001
+CMD ["bal", "run", "main.bal"]

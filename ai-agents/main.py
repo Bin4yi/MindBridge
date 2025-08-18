@@ -24,6 +24,13 @@ class ProcessRequest(BaseModel):
     userProfile: Optional[Dict[str, Any]] = None
     context: Optional[Dict[str, Any]] = None
 
+# Chat request model (for backward compatibility with Ballerina backend)
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
+    user_id: str
+    agent_type: Optional[str] = "therapist"
+
 class ProcessResponse(BaseModel):
     response: str
     agentType: str
@@ -69,6 +76,33 @@ async def process_message(request: ProcessRequest):
         logger.error(f"Error processing message: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
 
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    """Chat endpoint for compatibility with Ballerina backend"""
+    try:
+        logger.info(f"Received chat request for session {request.session_id} from user {request.user_id}")
+        
+        # Process through CrewAI multi-agent system
+        result = await mental_health_crew.process_message(
+            message=request.message,
+            session_id=request.session_id,
+            session_history=[],  # No history from this simplified endpoint
+            user_profile={"user_id": request.user_id},
+            context={"agent_type": request.agent_type}
+        )
+        
+        # Return simplified response for backward compatibility
+        return {
+            "response": result["response"],
+            "agent_type": result["agentType"],
+            "session_id": request.session_id,
+            "requires_attention": result.get("requiresImmediateAttention", False)
+        }
+        
+    except Exception as e:
+        logger.error(f"Chat endpoint error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
 @app.post("/test-standalone")
 async def test_standalone(message: str):
     """Test endpoint for standalone agent testing without backend"""
@@ -96,4 +130,4 @@ async def test_standalone(message: str):
         return {"status": "error", "error": str(e)}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
