@@ -20,41 +20,35 @@ mental_health_crew = MentalHealthCrew()
 class ProcessRequest(BaseModel):
     sessionId: str
     message: str
-    sessionHistory: List[Dict] = []
-    userProfile: Optional[Dict[str, Any]] = None
-    context: Optional[Dict[str, Any]] = None
+    sessionHistory: List[Dict[str, Any]] = []
+    userProfile: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
 
 class ProcessResponse(BaseModel):
-    response: str
-    agentType: str
-    confidenceScore: int
-    requiresImmediateAttention: bool
-    emotionalState: str
-    recommendations: List[str]
-    sessionSummary: Optional[str] = None
-    analysis: Optional[Dict[str, Any]] = None
+    status: str
+    result: Dict[str, Any]
+    sessionId: str
+    timestamp: datetime
 
 class HealthCheck(BaseModel):
     status: str
+    service: str
     timestamp: datetime
-    agents_active: int
-    crew_status: str
 
-@app.get("/health")
+@app.get("/health", response_model=HealthCheck)
 async def health_check():
     return HealthCheck(
         status="healthy",
-        timestamp=datetime.now(),
-        agents_active=6,
-        crew_status="active"
+        service="Mental Health AI Agents",
+        timestamp=datetime.now()
     )
 
 @app.post("/process", response_model=ProcessResponse)
 async def process_message(request: ProcessRequest):
+    """Process a message through the mental health agent crew"""
     try:
-        logger.info(f"Processing message for session {request.sessionId}")
+        logger.info(f"Processing message for session: {request.sessionId}")
         
-        # Process through CrewAI multi-agent system
         result = await mental_health_crew.process_message(
             message=request.message,
             session_id=request.sessionId,
@@ -63,11 +57,16 @@ async def process_message(request: ProcessRequest):
             context=request.context
         )
         
-        return ProcessResponse(**result)
+        return ProcessResponse(
+            status="success",
+            result=result,
+            sessionId=request.sessionId,
+            timestamp=datetime.now()
+        )
         
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        logger.error(f"Processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/test-standalone")
 async def test_standalone(message: str):
@@ -96,4 +95,4 @@ async def test_standalone(message: str):
         return {"status": "error", "error": str(e)}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8001)
