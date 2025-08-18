@@ -1,5 +1,8 @@
 [mindbridge.backend]
-OPENAI_API_KEY = "your-openai-api-key-here"
-PYTHON_AGENT_URL = "http://localhost:8000"
-DEFAULT_VOICE = "alloy"
-SPEECH_RATE = 1.0
+AI_AGENTS_URL = "http://localhost:8001"
+WHISPER_SERVICE_URL = "http://localhost:9000"
+DB_HOST = "localhost"
+DB_PORT = 5432
+DB_NAME = "mindbridge_db"
+DB_USER = "postgres"
+DB_PASSWORD = "password"

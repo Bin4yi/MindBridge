@@ -1,23 +1,61 @@
 version: "3.8"
 
 services:
-  ballerina-backend:
-    build:
-      context: ..
-      dockerfile: Dockerfile.ballerina
+  postgresql:
+    image: postgres:15
+    container_name: mindbridge_postgres
+    environment:
+      POSTGRES_DB: mindbridge_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
-      - "8001:8001"
-    depends_on:
-      - whisper-service
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   whisper-service:
     build:
-      context: ../backend/modules/speech
-      dockerfile: Dockerfile.whisper
+      context: ../whisper-service
+      dockerfile: Dockerfile
+    container_name: mindbridge_whisper
     ports:
       - "9000:9000"
     volumes:
-      - whisper_cache:/root/.cache/whisper # <-- Mount persistent cache here
+      - whisper_cache:/root/.cache/whisper
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s # Give time for model to load
+    restart: unless-stopped
+
+  python-agents:
+    build:
+      context: ../ai-agents
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-api-key}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ../ai-agents:/app
+    depends_on:
+      - postgresql
 
 volumes:
+  postgres_data:
   whisper_cache:

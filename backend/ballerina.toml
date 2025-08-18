@@ -13,15 +13,30 @@ version = "2.10.0"
 
 [[dependency]]
 org = "ballerina"
-name = "io"
-version = "1.6.0"
-
-[[dependency]]
-org = "ballerina"
-name = "mime"
-version = "2.9.0"
-
-[[dependency]]
-org = "ballerina"
 name = "log"
 version = "2.9.0"
+
+[[dependency]]
+org = "ballerina"
+name = "sql"
+version = "1.12.0"
+
+[[dependency]]
+org = "ballerinax"
+name = "postgresql"
+version = "1.11.0"
+
+[[dependency]]
+org = "ballerinax"
+name = "postgresql.driver"
+version = "1.5.0"
+
+[[dependency]]
+org = "ballerina"
+name = "time"
+version = "2.4.0"
+
+[[dependency]]
+org = "ballerina"
+name = "uuid"
+version = "1.7.0"
