@@ -1,0 +1,41 @@
+import type React from "react"
+import type { Metadata } from "next"
+import { DM_Sans } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-dm-sans",
+})
+
+export const metadata: Metadata = {
+  title: "MindBridge - Your Mental Wellness Companion",
+  description: "AI-powered mental health support and wellness guidance through voice conversations",
+  generator: "Next.js",
+  keywords: ["mental health", "AI assistant", "wellness", "therapy", "support"],
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en" className={dmSans.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
