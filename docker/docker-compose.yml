@@ -44,5 +44,23 @@ services:
       timeout: 10s
       retries: 3
 
+  postgresql:
+    image: postgres:15
+    container_name: mindbridge_postgres
+    environment:
+      POSTGRES_DB: mindbridge_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 volumes:
   whisper_cache:
+  postgres_data:
