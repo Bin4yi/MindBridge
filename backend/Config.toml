@@ -1,5 +1,5 @@
 [mindbridge.backend]
 OPENAI_API_KEY = "your-openai-api-key-here"
-PYTHON_AGENT_URL = "http://localhost:8000"
+PYTHON_AGENT_URL = "http://localhost:8001"
 DEFAULT_VOICE = "alloy"
 SPEECH_RATE = 1.0

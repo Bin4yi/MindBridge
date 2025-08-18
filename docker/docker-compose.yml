@@ -17,7 +17,32 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - whisper_cache:/root/.cache/whisper # <-- Mount persistent cache here
+      - whisper_cache:/root/.cache/whisper
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  python-agents:
+    build:
+      context: ../ai-agents
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-api-key}
+    depends_on:
+      - whisper-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   whisper_cache:

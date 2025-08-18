@@ -57,14 +57,15 @@ public class VoiceChatHandler {
 
         // Step 2: Send text to AI agent
         json agentRequest = {
+            "sessionId": request.sessionId,
             "message": sttResponse.text,
-            "session_id": request.sessionId,
-            "user_id": request.userId,
-            "agent_type": request.agentType ?: "therapist"
+            "sessionHistory": [],
+            "userProfile": {"name": "Voice User"},
+            "context": {"agent_type": request.agentType ?: "therapist"}
         };
 
         do {
-            http:Response agentResponse = check self.pythonAgentClient->post("/chat", agentRequest);
+            http:Response agentResponse = check self.pythonAgentClient->post("/process", agentRequest);
             
             if agentResponse.statusCode != 200 {
                 return {
@@ -78,7 +79,7 @@ public class VoiceChatHandler {
             }
 
             json agentResponseJson = check agentResponse.getJsonPayload();
-            string agentText = check agentResponseJson.response;
+            string agentText = check agentResponseJson.result.response;
             
             log:printInfo("Agent response: " + agentText);
 
