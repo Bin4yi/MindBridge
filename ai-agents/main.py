@@ -24,6 +24,12 @@ class ProcessRequest(BaseModel):
     userProfile: Dict[str, Any] = {}
     context: Dict[str, Any] = {}
 
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
+    user_id: str
+    agent_type: str = "therapist"
+
 class ProcessResponse(BaseModel):
     status: str
     result: Dict[str, Any]
@@ -66,6 +72,32 @@ async def process_message(request: ProcessRequest):
         
     except Exception as e:
         logger.error(f"Processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    """Chat endpoint for Ballerina backend integration"""
+    try:
+        logger.info(f"Processing chat for session: {request.session_id}, user: {request.user_id}, agent: {request.agent_type}")
+        
+        result = await mental_health_crew.process_message(
+            message=request.message,
+            session_id=request.session_id,
+            session_history=[],
+            user_profile={"user_id": request.user_id},
+            context={"agent_type": request.agent_type}
+        )
+        
+        # Return response in format expected by Ballerina
+        return {
+            "response": result.get("response", "I'm here to help."),
+            "agent_type": result.get("agentType", request.agent_type),
+            "session_id": request.session_id,
+            "requires_attention": result.get("requiresImmediateAttention", False)
+        }
+        
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/test-standalone")

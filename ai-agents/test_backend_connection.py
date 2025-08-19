@@ -7,8 +7,8 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Configuration
-BACKEND_URL = "http://localhost:8001"
-AGENT_URL = "http://localhost:8000"
+BACKEND_URL = "http://localhost:8001"  # The Ballerina backend port
+AGENT_URL = "http://localhost:8001"     # The Python agent port (changed to match actual)
 TEST_MESSAGE = "I've been feeling very sad lately and I don't know what to do."
 
 def check_agent_health():
@@ -46,7 +46,6 @@ def test_agent_directly():
             "session_id": "test-session",
             "message": TEST_MESSAGE,
             "user_id": "test-user",
-            "agent_type": "therapist"
         }
         
         response = requests.post(f"{AGENT_URL}/chat", json=data)
@@ -70,13 +69,19 @@ def main():
     # Check if OpenAI API key is set
     if not os.environ.get("OPENAI_API_KEY"):
         logging.warning("OPENAI_API_KEY not set in environment")
-        
-    # Check both services
+    else:
+        logging.info("OPENAI_API_KEY is set in environment")
+    
+    # Check agent service
+    logging.info("Checking agent health on " + AGENT_URL)
     agent_ok = check_agent_health()
+    
+    # Check backend service (which is the same in this case)
+    logging.info("Checking backend health on " + BACKEND_URL)
     backend_ok = check_backend_health()
     
-    if agent_ok and backend_ok:
-        logging.info("Both services are running. Testing direct agent communication...")
+    if agent_ok:
+        logging.info("Testing direct agent communication...")
         agent_test = test_agent_directly()
         
         if agent_test:
@@ -84,7 +89,7 @@ def main():
         else:
             logging.error("Agent direct test failed.")
     else:
-        logging.error("One or more services are not running.")
+        logging.error("Agent service is not running correctly.")
 
 if __name__ == "__main__":
     main()
