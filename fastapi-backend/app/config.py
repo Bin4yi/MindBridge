@@ -9,7 +9,7 @@ class Settings:
     API_V1_STR: str = ""
     
     # Database settings
-    POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")
+    POSTGRES_SERVER: str = os.getenv("DB_HOST", "127.0.0.1")
     POSTGRES_PORT: str = os.getenv("DB_PORT", "5432")
     POSTGRES_DB: str = os.getenv("DB_NAME", "mindbridge_db")
     POSTGRES_USER: str = os.getenv("DB_USER", "postgres")

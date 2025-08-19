@@ -37,12 +37,29 @@ app = FastAPI(title="MindBridge FastAPI Backend")
 # Apply database migrations on startup
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting MindBridge FastAPI Backend...")
+    
+    # Test database connection first
+    logger.info("Testing database connection...")
+    from app.database import wait_for_db
+    
+    if not wait_for_db():
+        logger.error("Failed to connect to database. Exiting...")
+        import sys
+        sys.exit(1)
+    
+    # Apply database migrations
     logger.info("Applying database migrations...")
     try:
         apply_migrations()
         logger.info("Database migrations completed successfully")
     except Exception as e:
         logger.error(f"Error applying migrations: {e}")
+        logger.error("Migration failed. Exiting...")
+        import sys
+        sys.exit(1)
+    
+    logger.info("FastAPI backend startup completed successfully")
 
 
 # Health check endpoint
