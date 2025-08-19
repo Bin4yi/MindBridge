@@ -1,19 +1,23 @@
 # ai-agents/crew/mental_health_crew.py
 from crewai import Agent, Task, Crew, Process
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from typing import List, Dict, Any, Optional
 import json
 import re
 import os
+
+load_dotenv()
 from datetime import datetime
 
 class MentalHealthCrew:
     def __init__(self):
         # Initialize the LLM with explicit API key
+        api_key = os.getenv('OPENAI_API_KEY')
         self.llm = ChatOpenAI(
             model="gpt-3.5-turbo",
             temperature=0.7,
-            openai_api_key=os.environ.get('OPENAI_API_KEY')
+            openai_api_key=api_key
         )
         self.agents = self._create_agents()
         self.crew = self._create_crew()
