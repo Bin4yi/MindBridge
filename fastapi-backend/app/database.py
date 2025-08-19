@@ -29,3 +29,12 @@ def get_db():
         raise
     finally:
         db.close()
+        
+def test_db_connection():
+    try:
+        with engine.connect() as connection:
+            logger.info("Database connection successful")
+            return True
+    except Exception as e:
+        logger.error(f"Database connection failed: {e}")
+        return False

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional, Any, Union, ByteArray
+from typing import List, Optional, Any, Union
 from datetime import datetime
 
 class VoiceTranscribeResponse(BaseModel):

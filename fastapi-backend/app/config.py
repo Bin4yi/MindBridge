@@ -13,7 +13,7 @@ class Settings:
     POSTGRES_PORT: str = os.getenv("DB_PORT", "5432")
     POSTGRES_DB: str = os.getenv("DB_NAME", "mindbridge_db")
     POSTGRES_USER: str = os.getenv("DB_USER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("DB_PASSWORD", "password")
+    POSTGRES_PASSWORD: str = os.getenv("DB_PASSWORD", "yomal")
     DATABASE_URI: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
     
     # External service URLs
