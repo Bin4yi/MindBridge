@@ -27,8 +27,8 @@ yarn-error.log*
 .vercel
 .env
 
-venv
-.venv
+venv/
+.venv/
 
 # Byte-compiled / cache files
 __pycache__/
