@@ -1,0 +1,57 @@
+# Ballerina.toml
+[package]
+org = "mindbridge"
+name = "ai_agent"
+version = "1.0.0"
+distribution = "2201.12.0"
+
+[build-options]
+observabilityIncluded = true
+
+[[dependency]]
+org = "ballerinax"
+name = "ai.agent"
+version = "0.9.2"
+
+[[dependency]]
+org = "ballerina"
+name = "http"
+version = "2.10.0"
+
+[[dependency]]
+org = "ballerina"
+name = "log"
+version = "2.9.0"
+
+[[dependency]]
+org = "ballerina"
+name = "uuid"
+version = "1.7.0"
+
+[[dependency]]
+org = "ballerina"
+name = "time"
+version = "2.4.0"
+
+[[dependency]]
+org = "ballerina"
+name = "mime"
+version = "2.9.0"
+
+# Config.toml
+[mindbridge.ai_agent]
+OPENAI_API_KEY = "your-openai-api-key-here"
+SERVICE_URL = "http://0.0.0.0:8001"
+SERVICE_PORT = 8001
+
+# Cloud.toml (for cloud deployment)
+[container.image]
+name = "mindbridge-ai-agent"
+tag = "latest"
+
+[cloud.config.envs]
+OPENAI_API_KEY = "${OPENAI_API_KEY}"
+
+# Dockerfile equivalent properties
+[container]
+base_image = "ballerina/jre11:v1"
